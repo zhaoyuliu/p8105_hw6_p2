@@ -33,7 +33,7 @@ Column {.sidebar}
 # SelectInput widget
 year = nynoaa %>% distinct(year) %>% filter(year > 2005) %>% pull()
 
-selectInput("year_choice", label = h3("Year"),
+selectInput("year_choice", label = h3("Year(from 2006 to 2010)"),
             choices = year, selected = "2006")
 
 # radioButtons widget
