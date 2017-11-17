@@ -1,0 +1,80 @@
+---
+title: "p8105_hw6_p2"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: row
+  runtime: shiny
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(tidyverse)
+library(janitor)
+library(stringr)
+library(forcats)
+library(viridis)
+library(plotly)
+library(shiny)
+
+nynoaa=read_csv("./data/nynoaadat.zip",col_types = "cDiiidd") %>%
+  clean_names()%>%
+  separate(date, into = c("year", "month", "day"))%>%
+  filter(!is.na(tmin), !is.na(tmax), !is.na(snow)) %>%
+  filter(snow < 100, snow > 0, year > 2005)
+
+```
+
+Column {.sidebar}
+-----------------------------------------------------------------------
+
+```{r}
+year = nynoaa %>% distinct(year) %>% filter(year > 2005) %>% pull()
+
+selectInput("year_choice", label = h3("Year"),
+            choices = year, selected = "2006")
+```
+
+
+Row
+-----------------------------------------------------------------------
+
+### Trend of tmax and tmin by snowfall
+
+```{r}
+renderPlotly({ 
+tmin_tmax_snow = nynoaa%>%
+  filter(year == input$year_choice) %>%
+  mutate(tmin = tmin/10, tmax = tmax/10) %>%
+  mutate(text_label = str_c("snow(mm): ", snow, "\nmonth: ", month, "\nyear: ", year)) 
+plot_ly(tmin_tmax_snow, x = ~ tmax, y = ~ tmin, size = ~snow, type = "scatter", mode = "markers", 
+        text = ~text_label, color = ~snow)
+})
+```
+
+Row {.tabset .tabset-fade}
+-----------------------------------------------------------------------
+
+### Boxplots of snowfall distribution by month
+
+```{r}
+renderPlotly({
+nynoaa%>%
+  mutate(snow = as.numeric(snow), year = as.character(year), month = as.character(month))%>%
+  filter(year == input$year_choice) %>%
+  plot_ly(x = ~ month, y = ~snow, color = ~ month, type = "box",  colors = "Set2")
+})
+```
+
+### Snowfall counts by year
+
+```{r}
+renderPlotly({
+scatter_ggplot = nynoaa %>%
+  filter(year == input$year_choice) %>%
+  mutate(snow = as.numeric(snow), year = as.character(year), month = as.character(month))%>%
+  ggplot(aes(x = snow, fill = year)) +
+  geom_bar()
+ggplotly(scatter_ggplot)
+})
+```
+
