@@ -20,6 +20,7 @@ nynoaa=read_csv("./data/nynoaadat.zip",col_types = "cDiiidd") %>%
   clean_names()%>%
   separate(date, into = c("year", "month", "day"))%>%
   filter(!is.na(tmin), !is.na(tmax), !is.na(snow)) %>%
+  mutate(tmin = tmin/10, tmax = tmax/10) %>%
   filter(snow < 100, snow > 0, year > 2005)
 
 ```
@@ -32,6 +33,13 @@ year = nynoaa %>% distinct(year) %>% filter(year > 2005) %>% pull()
 
 selectInput("year_choice", label = h3("Year"),
             choices = year, selected = "2006")
+
+##radioButtons widget
+month=nynoaa %>% distinct(month) %>% filter(month%in% c("11", "12", "01","02", "03","04"))%>%pull()
+# radioButtons widget
+radioButtons("month_choice", label = h3("Choose a month (from November to April)"),
+    choices = month, 
+    selected = "01")
 ```
 
 
@@ -43,8 +51,8 @@ Row
 ```{r}
 renderPlotly({ 
 tmin_tmax_snow = nynoaa%>%
-  filter(year == input$year_choice) %>%
-  mutate(tmin = tmin/10, tmax = tmax/10) %>%
+  filter(year == input$year_choice,
+        month %in% input$month_choice) %>%
   mutate(text_label = str_c("snow(mm): ", snow, "\nmonth: ", month, "\nyear: ", year)) 
 plot_ly(tmin_tmax_snow, x = ~ tmax, y = ~ tmin, size = ~snow, type = "scatter", mode = "markers", 
         text = ~text_label, color = ~snow)
@@ -60,7 +68,8 @@ Row {.tabset .tabset-fade}
 renderPlotly({
 nynoaa%>%
   mutate(snow = as.numeric(snow), year = as.character(year), month = as.character(month))%>%
-  filter(year == input$year_choice) %>%
+  filter(year == input$year_choice,month %in% input$month_choice
+        ) %>%
   plot_ly(x = ~ month, y = ~snow, color = ~ month, type = "box",  colors = "Set2")
 })
 ```
@@ -70,7 +79,8 @@ nynoaa%>%
 ```{r}
 renderPlotly({
 scatter_ggplot = nynoaa %>%
-  filter(year == input$year_choice) %>%
+  filter(year == input$year_choice,month %in% input$month_choice
+        ) %>%
   mutate(snow = as.numeric(snow), year = as.character(year), month = as.character(month))%>%
   ggplot(aes(x = snow, fill = year)) +
   geom_bar()
