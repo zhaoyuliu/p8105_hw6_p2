@@ -81,7 +81,7 @@ nynoaa %>%
 renderPlotly({
 bar_ggplot = nynoaa %>%
   filter(year == input$year_choice, month %in% input$month_choice) %>%
-  ggplot(aes(x = snow, fill = year)) +
+  ggplot(aes(x = snow)) +
   geom_bar()
 ggplotly(bar_ggplot)
 })
